@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>demo</title>
+  <script src="node_modules/localforage/dist/localforage.js"></script>
+</head>
+<body>
+  <p>
+    save password with safeStorage and indexedDB:
+    <input id="safeStorage" type="text" />
+    <button>save</button>
+  </p>
+  <p>
+    save password with keytar:
+    <input id="keytar" type="text" />
+    <button>save</button>
+  </p>
+</body>
+<script>
+localforage.config({});
+
+// get value
+(async() => {
+  let value = await localforage.getItem('safeStorage');
+  if (value) {
+    document.getElementById('safeStorage').value = await window.electron.decrypt(value);
+  }
+  value = await window.electron.getKeytar();
+  if (value) {
+    document.getElementById('keytar').value = value;
+  }
+})()
+
+// save value
+document.addEventListener('click', async (e) => {
+  const target = e.target;
+  if (target.nodeName !== 'BUTTON') {
+    return;
+  }
+  const input = target.previousElementSibling;
+  if (input.id === 'safeStorage') {
+    let value = await window.electron.encrypt(input.value);
+    await localforage.setItem('safeStorage', value);
+  } else if (input.id === 'keytar') {
+    await window.electron.saveKeytar(input.value);
+  }
+  console.log('save success', input.value);
+});
+
+
+</script>
+</html>

